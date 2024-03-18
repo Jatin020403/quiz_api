@@ -1,16 +1,33 @@
+use actix_multipart::{
+    form::{
+        tempfile::{TempFile, TempFileConfig},
+        MultipartForm,
+    },
+    Multipart,
+};
+
+use actix_multipart::form::text::Text;
+
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 // REQUESTS
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(MultipartForm)]
+pub struct FileUpload {
+    #[multipart(rename = "file")]
+    files: Vec<TempFile>,
+}
+
+#[derive(Debug, MultipartForm)]
 pub struct RequestAIQuery {
-    pub id: Option<String>,
-    pub timestamp: Option<DateTime<Utc>>,
-    pub content_type: String,
-    pub request: String,
-    pub content: String,
+    pub id: Option<Text<String>>,
+    pub timestamp: Option<Text<DateTime<Utc>>>,
+    pub content_type: Text<String>,
+    pub request: Text<String>,
+    pub content: Text<String>,
+    pub count: Text<i8>,
+    pub files: Option<TempFile>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -19,7 +36,6 @@ pub struct GenerateContentRequest {
     pub generation_config: Option<GenerationConfig>,
     pub tools: Option<Vec<Tools>>,
 }
-
 
 // RESPONSE
 
@@ -42,7 +58,6 @@ pub struct GenerateContentResponse {
     pub candidates: Vec<Candidate>,
     pub usage_metadata: Option<UsageMetadata>,
 }
-
 
 // QUIZ/FLASHCARDS
 
