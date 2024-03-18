@@ -3,7 +3,7 @@ mod model;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::{http::header, web, App, HttpServer};
+use actix_web::{http::header, App, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

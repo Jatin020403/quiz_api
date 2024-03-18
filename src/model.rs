@@ -1,10 +1,4 @@
-use actix_multipart::{
-    form::{
-        tempfile::{TempFile, TempFileConfig},
-        MultipartForm,
-    },
-    Multipart,
-};
+use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 
 use actix_multipart::form::text::Text;
 
@@ -12,12 +6,6 @@ use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 // REQUESTS
-
-#[derive(MultipartForm)]
-pub struct FileUpload {
-    #[multipart(rename = "file")]
-    files: Vec<TempFile>,
-}
 
 #[derive(Debug, MultipartForm)]
 pub struct RequestAIQuery {
