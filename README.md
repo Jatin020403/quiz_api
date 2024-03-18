@@ -1,7 +1,7 @@
 # Quiz API
 
 ## deploy:
-1.generate api endpoint from Gemini
+1. generate api endpoint from Gemini
 2. create folder .config with file config.toml
 3. insert the following data 
   ```toml
