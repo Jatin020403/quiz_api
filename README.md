@@ -6,13 +6,13 @@
 3. insert the following data 
   ```toml
   [env]
-  API_ENDPOINT="us-central1-aiplatform.googleapis.com"
-  PROJECT_ID="united-helix-416211"
-  LOCATION_ID="us-central1"
+  API_ENDPOINT=""
+  PROJECT_ID=""
+  LOCATION_ID=""
   ```
 4. run with
   ```sh
-  cargpo run 
+  cargo run 
   ```
 
 ## todo:
