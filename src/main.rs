@@ -2,11 +2,18 @@ mod handler;
 mod model;
 
 use actix_cors::Cors;
-use actix_web::middleware::Logger;
-use actix_web::{http::header, App, HttpServer};
+use actix_web::{http::header, middleware::Logger, web, App, HttpServer};
+
+extern crate mongodb;
+use mongodb::{options::ClientOptions, Client};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
+    let client_options = ClientOptions::parse(uri).await.unwrap();
+    let client = Client::with_options(client_options).expect("failed to connect");
+    let db = client.database("LEANLEARN");
+
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "actix_web=info");
     }
@@ -26,6 +33,7 @@ async fn main() -> std::io::Result<()> {
             ])
             .supports_credentials();
         App::new()
+            .app_data(web::Data::new(db.clone()))
             .configure(handler::config)
             .wrap(cors)
             .wrap(Logger::default())

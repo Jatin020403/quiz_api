@@ -2,6 +2,7 @@ use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 
 use actix_multipart::form::text::Text;
 
+// use bson::serde_helpers::serialize_hex_string_as_object_id;
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -47,57 +48,73 @@ pub struct GenerateContentResponse {
     pub usage_metadata: Option<UsageMetadata>,
 }
 
-// QUIZ/FLASHCARDS
+// QUIZ // FLASHCARDS
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Faculty {
-    pub faculty_id: String,
+    // #[serde(serialize_with = "serialize_hex_string_as_object_id")]
+    pub _id: String,
     pub name: String,
-    pub quiz_id: Vec<String>,
+    pub password: String,
+    pub quiz_id: Option<Vec<String>>,
+    pub flashes: Option<Vec<Flashcard>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Student {
-    pub student_id: String,
+    // #[serde(serialize_with = "serialize_hex_string_as_object_id")]
+    pub _id: String,
     pub name: String,
-    pub quiz_id: Vec<String>,
-    pub flash_id: Vec<String>,
+    pub password: String,
+    pub quiz_id: Option<Vec<QuizMarks>>,
+    pub flashes: Option<Vec<Flashcard>>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CreateUser {
+    pub name: String,
+    pub password: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CreateFlash {
+    pub user_id: String,
+    pub topic: String,
+    pub count: i8,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct QuizMarks {
+    pub quiz_id: String,
+    pub ans: Vec<i8>,
+    pub marks: i8,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Admin {
     pub admin_id: String,
     pub name: String,
+    pub password: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Flashcard {
-    pub flash_id: String,
-    pub student_id: String,
-    pub cards: Vec<String>,
-    pub created_at: DateTime<Utc>,
+    pub _id: String,
+    pub topic: String,
+    pub content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Quiz {
-    pub quiz_id: String,
+    pub _id: String,
     pub faculty_id: String,
     pub questions: Vec<Vec<String>>,
     pub answers: Vec<i32>,
-    pub student_answers: HashMap<String, Vec<i32>>,
+    pub student_id: Vec<String>,
     pub student_marks: HashMap<String, i32>,
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LLM {
-    pub req_id: String,
-    pub purpose: String,
-    pub msg: String,
-    pub created_at: DateTime<Utc>,
-    pub completed_at: DateTime<Utc>,
 }
 
 // GEMINI VERTEX STRUCTS
