@@ -327,7 +327,7 @@ async fn add_faculty(db: web::Data<Database>, form: web::Form<CreateUser>) -> im
 }
 
 #[post("/create_flash")]
-async fn create_flash(db: web::Data<Database>, focreate_flarm: web::Form<CreateFlash>) -> impl Responder {
+async fn create_flash(db: web::Data<Database>, form: web::Form<CreateFlash>) -> impl Responder {
     let coll = db.collection::<Document>("users");
     let cont = match generate_flashcard_tester(form.topic.clone(), form.count).await {
         Ok(s) => s,
