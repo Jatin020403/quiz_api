@@ -54,7 +54,7 @@ pub struct GenerateContentResponse {
 pub struct Faculty {
     // #[serde(serialize_with = "serialize_hex_string_as_object_id")]
     pub _id: String,
-    pub name: String,
+    pub username: String,
     pub password: String,
     pub quiz_id: Option<Vec<String>>,
     pub flashes: Option<Vec<Flashcard>>,
@@ -64,7 +64,7 @@ pub struct Faculty {
 pub struct Student {
     // #[serde(serialize_with = "serialize_hex_string_as_object_id")]
     pub _id: String,
-    pub name: String,
+    pub username: String,
     pub password: String,
     pub quiz_id: Option<Vec<QuizMarks>>,
     pub flashes: Option<Vec<Flashcard>>,
@@ -72,7 +72,7 @@ pub struct Student {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CreateUser {
-    pub name: String,
+    pub username: String,
     pub password: String,
 }
 

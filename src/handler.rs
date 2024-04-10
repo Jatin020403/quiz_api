@@ -5,6 +5,13 @@ use crate::model::{
     GenerateContentResponse, GenerationConfig, GenericResponse, Part, RequestAIQuery, Student,
 };
 
+use crate::helpers::generate_ai_content;
+
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2,
+};
+
 use bson::{doc, to_document};
 use gcp_auth::AuthenticationManager;
 
@@ -31,68 +38,9 @@ async fn health_checker_handler() -> impl Responder {
 
 #[post("/generate_flashcard")]
 async fn generate_flashcard(MultipartForm(body): MultipartForm<RequestAIQuery>) -> impl Responder {
-    let api_endpoint: String = match env::var("API_ENDPOINT") {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-    let project_id: String = match env::var("PROJECT_ID") {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-    let location_id: String = match env::var("LOCATION_ID") {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    }; // Sometimes called "region" in gCloud docs.
-
-    println!("Endpoint : {:?}", api_endpoint);
-
-    let endpoint_url = format!(
-        "https://{api_endpoint}/v1beta1/projects/{project_id}/locations/{location_id}/publishers/google/models/{MODEL_NAME}:generateContent"
-    );
-
-    let authentication_manager: AuthenticationManager = match AuthenticationManager::new().await {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-    let scopes = &["https://www.googleapis.com/auth/cloud-platform"];
-    let token = match authentication_manager.get_token(scopes).await {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
 
     let prompt = format!(
-        "Extract {:?} key points from the text
-Present the information in a JSON format with two fields:
+        "Extract {:?} key points from the text. Present the information in a JSON format with two fields:
 * key_points_array: An array containing each key point as a string.
 * number_of_key_points: The number of elements in the key_points_array.
 Use only these valid fields.
@@ -103,39 +51,7 @@ JSON:",
         body.count, body.content
     );
 
-    let payload = GenerateContentRequest {
-        contents: vec![Content {
-            role: "user".to_string(),
-            parts: vec![Part::Text(prompt.to_string())],
-        }],
-        generation_config: Some(GenerationConfig {
-            max_output_tokens: Some(2048),
-            temperature: Some(0.4),
-            top_p: Some(1.0),
-            top_k: Some(32),
-            ..Default::default()
-        }),
-        tools: None,
-    };
-
-    let resp: reqwest::Response = match reqwest::Client::new()
-        .post(&endpoint_url)
-        .bearer_auth(token.as_str())
-        .json(&payload)
-        .send()
-        .await
-    {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-
-    let gen_response: GenerateContentResponse = match resp.json::<GenerateContentResponse>().await {
+    let gen_response: GenerateContentResponse = match generate_ai_content(prompt).await{
         Ok(s) => s,
         Err(error) => {
             let response_json = &GenericResponse {
@@ -238,64 +154,6 @@ JSON:",
 
 #[post("/generate_quiz")]
 async fn generate_quiz(MultipartForm(body): MultipartForm<RequestAIQuery>) -> impl Responder {
-    let api_endpoint: String = match env::var("API_ENDPOINT") {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-    let project_id: String = match env::var("PROJECT_ID") {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-    let location_id: String = match env::var("LOCATION_ID") {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    }; // Sometimes called "region" in gCloud docs.
-
-    println!("Endpoint : {:?}", api_endpoint);
-
-    let endpoint_url = format!(
-        "https://{api_endpoint}/v1beta1/projects/{project_id}/locations/{location_id}/publishers/google/models/{MODEL_NAME}:generateContent"
-    );
-
-    let authentication_manager: AuthenticationManager = match AuthenticationManager::new().await {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-    let scopes = &["https://www.googleapis.com/auth/cloud-platform"];
-    let token = match authentication_manager.get_token(scopes).await {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
 
     let prompt = format!("**Prompt:**
 
@@ -332,39 +190,7 @@ Given a passage of text `{:?}` and an integer {:?}, generate a JSON object conta
 ]
 }}", body.content, body.count, body.count, body.count );
 
-    let payload = GenerateContentRequest {
-        contents: vec![Content {
-            role: "user".to_string(),
-            parts: vec![Part::Text(prompt.to_string())],
-        }],
-        generation_config: Some(GenerationConfig {
-            max_output_tokens: Some(2048),
-            temperature: Some(0.4),
-            top_p: Some(1.0),
-            top_k: Some(32),
-            ..Default::default()
-        }),
-        tools: None,
-    };
-
-    let resp: reqwest::Response = match reqwest::Client::new()
-        .post(&endpoint_url)
-        .bearer_auth(token.as_str())
-        .json(&payload)
-        .send()
-        .await
-    {
-        Ok(s) => s,
-        Err(error) => {
-            let response_json = &GenericResponse {
-                status: "fail".to_string(),
-                message: error.to_string(),
-            };
-            return HttpResponse::InternalServerError().json(response_json);
-        }
-    };
-
-    let gen_response: GenerateContentResponse = match resp.json::<GenerateContentResponse>().await {
+    let gen_response: GenerateContentResponse = match generate_ai_content(prompt).await {
         Ok(s) => s,
         Err(error) => {
             let response_json = &GenericResponse {
@@ -385,15 +211,31 @@ Given a passage of text `{:?}` and an integer {:?}, generate a JSON object conta
 
 #[post("/add_student")]
 async fn add_student(db: web::Data<Database>, form: web::Form<CreateUser>) -> impl Responder {
+    let coll = db.collection::<Document>("users");
+
+    let salt = SaltString::generate(&mut OsRng);
+
+    // Argon2 with default params (Argon2id v19)
+    let argon2 = Argon2::default();
+
+    // Hash password to PHC string ($argon2id$v=19$...)
+    let password_hash = match argon2.hash_password(form.password.as_bytes(), &salt) {
+        Ok(s) => s.to_string(),
+        Err(error) => {
+            let response_json = &GenericResponse {
+                status: "fail".to_string(),
+                message: error.to_string(),
+            };
+            return HttpResponse::InternalServerError().json(response_json);
+        }
+    };
     let user = Student {
         _id: Uuid::new_v4().to_string(),
-        name: form.name.clone(),
-        password: form.password.clone(),
+        username: form.username.clone(),
+        password: password_hash,
         quiz_id: Some(Vec::new()),
         flashes: Some(Vec::new()),
     };
-
-    let coll = db.collection::<Document>("users");
 
     let bson_user = match to_document(&user) {
         Ok(s) => s,
@@ -428,10 +270,28 @@ async fn add_student(db: web::Data<Database>, form: web::Form<CreateUser>) -> im
 #[post("/add_faculty")]
 async fn add_faculty(db: web::Data<Database>, form: web::Form<CreateUser>) -> impl Responder {
     let coll = db.collection::<Document>("users");
+
+    let salt = SaltString::generate(&mut OsRng);
+
+    // Argon2 with default params (Argon2id v19)
+    let argon2 = Argon2::default();
+
+    // Hash password to PHC string ($argon2id$v=19$...)
+    let password_hash = match argon2.hash_password(form.password.as_bytes(), &salt) {
+        Ok(s) => s.to_string(),
+        Err(error) => {
+            let response_json = &GenericResponse {
+                status: "fail".to_string(),
+                message: error.to_string(),
+            };
+            return HttpResponse::InternalServerError().json(response_json);
+        }
+    };
+
     let user = Faculty {
         _id: Uuid::new_v4().to_string(),
-        name: form.name.clone(),
-        password: form.password.clone(),
+        username: form.username.clone(),
+        password: password_hash,
         quiz_id: Some(Vec::new()),
         flashes: Some(Vec::new()),
     };
@@ -467,7 +327,7 @@ async fn add_faculty(db: web::Data<Database>, form: web::Form<CreateUser>) -> im
 }
 
 #[post("/create_flash")]
-async fn create_flash(db: web::Data<Database>, form: web::Form<CreateFlash>) -> impl Responder {
+async fn create_flash(db: web::Data<Database>, focreate_flarm: web::Form<CreateFlash>) -> impl Responder {
     let coll = db.collection::<Document>("users");
     let cont = match generate_flashcard_tester(form.topic.clone(), form.count).await {
         Ok(s) => s,
