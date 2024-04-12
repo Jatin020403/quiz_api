@@ -8,6 +8,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 // REQUESTS
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+enum UserType {
+    Student,
+    Faculty,
+    Admin,
+}
+
 #[derive(Debug, MultipartForm)]
 pub struct RequestAIQuery {
     pub id: Option<Text<String>>,
@@ -56,7 +63,7 @@ pub struct Faculty {
     pub _id: String,
     pub username: String,
     pub password: String,
-    pub quiz_id: Option<Vec<String>>,
+    pub quiz: Option<Vec<String>>,
     pub flashes: Option<Vec<Flashcard>>,
 }
 
@@ -66,18 +73,24 @@ pub struct Student {
     pub _id: String,
     pub username: String,
     pub password: String,
-    pub quiz_id: Option<Vec<QuizMarks>>,
+    pub quiz: Option<Vec<String>>,
     pub flashes: Option<Vec<Flashcard>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct CreateUser {
+pub struct User {
     pub username: String,
     pub password: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct CreateFlash {
+    pub user_id: String,
+    pub topic: String,
+    pub count: i8,
+}
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct CreateQuiz {
     pub user_id: String,
     pub topic: String,
     pub count: i8,
@@ -105,7 +118,7 @@ pub struct Flashcard {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Quiz {
+pub struct QuizTable {
     pub _id: String,
     pub faculty_id: String,
     pub questions: Vec<Vec<String>>,
@@ -115,6 +128,12 @@ pub struct Quiz {
     pub from: DateTime<Utc>,
     pub to: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Quiz {
+    pub _id: String,
+    pub quizzes: String,
 }
 
 // GEMINI VERTEX STRUCTS

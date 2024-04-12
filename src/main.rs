@@ -1,15 +1,19 @@
 mod handler;
 mod helpers;
+mod initialiser;
 mod model;
 
+use crate::initialiser::initialise;
+
 use actix_cors::Cors;
-use actix_web::{http::header, middleware::Logger, web, App, HttpServer};
+use actix_web::{http::header, middleware::Logger, web, web::Data, App, HttpServer};
 
 extern crate mongodb;
 use mongodb::{options::ClientOptions, Client};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    let util = Data::new(initialise());
     let uri = std::env::var("MONGODB_URI").unwrap_or_else(|_| "mongodb://localhost:27017".into());
     let client_options = ClientOptions::parse(uri).await.unwrap();
     let client = Client::with_options(client_options).expect("failed to connect");
@@ -35,6 +39,7 @@ async fn main() -> std::io::Result<()> {
             .supports_credentials();
         App::new()
             .app_data(web::Data::new(db.clone()))
+            .app_data(Data::clone(&util))
             .configure(handler::config)
             .wrap(cors)
             .wrap(Logger::default())
