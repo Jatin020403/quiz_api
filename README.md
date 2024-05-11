@@ -18,5 +18,5 @@
 ## todo:
 - [X] Connect the API for gemini
 - [X] Connect Mongo
-- [ ] Design queries
-- [ ] Make crud for all users
+- [X] Design queries
+- [X] Make crud for all users
